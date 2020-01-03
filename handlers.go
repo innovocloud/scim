@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/elimity-com/scim/errors"
+	"github.com/innovocloud/scim/errors"
 )
 
 func errorHandler(w http.ResponseWriter, _ *http.Request, scimErr scimError) {
@@ -32,17 +32,26 @@ func (s Server) schemasHandler(w http.ResponseWriter, r *http.Request) {
 
 	schemas := s.getSchemas()
 	start, end := clamp(params.StartIndex-1, params.Count, len(schemas))
-	var resources []interface{}
-	for _, v := range schemas[start:end] {
-		resources = append(resources, v)
-	}
+	// var resources []interface{}
+	// for _, v := range schemas[start:end] {
+	// 	resources = append(resources, v)
+	// }
+	resources := schemas[start:end]
 
-	raw, err := json.Marshal(listResponse{
-		TotalResults: len(schemas),
-		ItemsPerPage: params.Count,
-		StartIndex:   params.StartIndex,
-		Resources:    resources,
-	})
+	var resp interface{}
+
+	if s.Config.OmitSchemasHeader {
+		resp = resources
+	} else {
+		resp = ListResponse{
+			TotalResults: len(schemas),
+			ItemsPerPage: params.Count,
+			StartIndex:   params.StartIndex,
+			Resources:    resources,
+		}
+	}
+	raw, err := json.Marshal(resp)
+
 	if err != nil {
 		errorHandler(w, r, scimErrorInternalServer)
 		log.Fatalf("failed marshaling list response: %v", err)
@@ -86,17 +95,24 @@ func (s Server) resourceTypesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	start, end := clamp(params.StartIndex-1, params.Count, len(s.ResourceTypes))
-	var resources []interface{}
-	for _, v := range s.ResourceTypes[start:end] {
-		resources = append(resources, v.getRaw())
+	var resources []ResourceType
+	resources = s.ResourceTypes[start:end]
+
+	var resp interface{}
+
+	if s.Config.OmitResourceTypesHeader {
+		resp = resources
+	} else {
+		resp = ListResponse{
+			TotalResults: len(s.ResourceTypes),
+			ItemsPerPage: params.Count,
+			StartIndex:   params.StartIndex,
+			Resources:    resources,
+		}
 	}
 
-	raw, err := json.Marshal(listResponse{
-		TotalResults: len(s.ResourceTypes),
-		ItemsPerPage: params.Count,
-		StartIndex:   params.StartIndex,
-		Resources:    resources,
-	})
+	raw, err := json.Marshal(resp)
+
 	if err != nil {
 		errorHandler(w, r, scimErrorInternalServer)
 		log.Fatalf("failed marshaling list response: %v", err)
@@ -123,7 +139,7 @@ func (s Server) resourceTypeHandler(w http.ResponseWriter, r *http.Request, name
 		return
 	}
 
-	raw, err := json.Marshal(resourceType.getRaw())
+	raw, err := json.Marshal(resourceType)
 	if err != nil {
 		errorHandler(w, r, scimErrorInternalServer)
 		log.Fatalf("failed marshaling resource type: %v", err)
@@ -138,7 +154,7 @@ func (s Server) resourceTypeHandler(w http.ResponseWriter, r *http.Request, name
 // serviceProviderConfigHandler receives an HTTP GET to this endpoint will return a JSON structure that describes the
 // SCIM specification features available on a service provider.
 func (s Server) serviceProviderConfigHandler(w http.ResponseWriter, r *http.Request) {
-	raw, err := json.Marshal(s.Config.getRaw())
+	raw, err := json.Marshal(s.Config)
 	if err != nil {
 		errorHandler(w, r, scimErrorInternalServer)
 		log.Fatalf("failed marshaling service provider config: %v", err)
@@ -244,17 +260,20 @@ func (s Server) resourcesGetHandler(w http.ResponseWriter, r *http.Request, reso
 		return
 	}
 
-	var resources []interface{}
-	for _, v := range page.Resources {
-		resources = append(resources, v.response(resourceType))
-	}
+	// var resources []interface{}
+	// for _, v := range page.Resources {
+	// 	resources = append(resources, v.response(resourceType))
+	// }
 
-	raw, err := json.Marshal(listResponse{
-		TotalResults: page.TotalResults,
-		Resources:    resources,
-		StartIndex:   params.StartIndex,
-		ItemsPerPage: params.Count,
-	})
+	// raw, err := json.Marshal(listResponse{
+	// 	TotalResults: page.TotalResults,
+	// 	Resources:    resources,
+	// 	StartIndex:   params.StartIndex,
+	// 	ItemsPerPage: params.Count,
+	// })
+	page.StartIndex = params.StartIndex
+	page.ItemsPerPage = params.Count
+	raw, err := json.Marshal(page)
 	if err != nil {
 		errorHandler(w, r, scimErrorInternalServer)
 		log.Fatalf("failed marshalling list response: %v", err)

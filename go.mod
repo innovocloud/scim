@@ -1,4 +1,4 @@
-module github.com/elimity-com/scim
+module github.com/innovocloud/scim
 
 go 1.13
 

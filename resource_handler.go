@@ -6,7 +6,7 @@ import (
 	"net/url"
 
 	scim "github.com/di-wu/scim-filter-parser"
-	"github.com/elimity-com/scim/errors"
+	"github.com/innovocloud/scim/errors"
 )
 
 // ListRequestParams request parameters sent to the API via a "GetAll" route.
@@ -58,7 +58,7 @@ type ResourceHandler interface {
 	// Get returns the resource corresponding with the given identifier.
 	Get(r *http.Request, id string) (Resource, errors.GetError)
 	// GetAll returns a paginated list of resources.
-	GetAll(r *http.Request, params ListRequestParams) (Page, errors.GetError)
+	GetAll(r *http.Request, params ListRequestParams) (ListResponse, errors.GetError)
 	// Replace replaces ALL existing attributes of the resource with given identifier. Given attributes that are empty
 	// are to be deleted. Returns a resource with the attributes that are stored.
 	Replace(r *http.Request, id string, attributes ResourceAttributes) (Resource, errors.PutError)

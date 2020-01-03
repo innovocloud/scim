@@ -4,16 +4,8 @@ import (
 	"encoding/json"
 )
 
-// Page represents a paginated resource query response.
-type Page struct {
-	// TotalResults is the total number of results returned by the list or query operation.
-	TotalResults int
-	// Resources is a multi-valued list of complex objects containing the requested resources.
-	Resources []Resource
-}
-
-// listResponse identifies a query response.
-type listResponse struct {
+// ListResponse identifies a query response.
+type ListResponse struct {
 	// TotalResults is the total number of results returned by the list or query operation.
 	// The value may be larger than the number of resources returned, such as when returning
 	// a single page of results where multiple pages are available.
@@ -31,10 +23,10 @@ type listResponse struct {
 	// Resources is a multi-valued list of complex objects containing the requested resources.
 	// This may be a subset of the full set of resources if pagination is requested.
 	// REQUIRED if TotalResults is non-zero.
-	Resources []interface{}
+	Resources interface{}
 }
 
-func (l listResponse) MarshalJSON() ([]byte, error) {
+func (l ListResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]interface{}{
 		"schemas":      []string{"urn:ietf:params:scim:api:messages:2.0:ListResponse"},
 		"totalResults": l.TotalResults,

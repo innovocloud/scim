@@ -7,63 +7,33 @@ import (
 )
 
 func checkAttributeName(name string) {
-	// starts w/ a A-Za-z followed by a A-Za-z0-9, a dollar sign, a hyphen or an underscore
+	// starts with a A-Za-z followed by a A-Za-z0-9, a dollar sign, a hyphen or an underscore
 	match, err := regexp.MatchString(`^[A-Za-z][\w$-]*$`, name)
 	if err != nil {
-		panic(err)
+		panic(err) // @TODO libraries should not panic
 	}
 
 	if !match {
-		panic(fmt.Sprintf("invalid attribute name %q", name))
+		panic(fmt.Sprintf("invalid attribute name %q", name)) // @TODO libraries should not panic
 	}
 }
 
-// AttributeMutability is a single keyword indicating the circumstances under which the value of the attribute can be
-// (re)defined.
-type AttributeMutability struct {
-	m attributeMutability
-}
-
-// AttributeMutabilityImmutable indicates that the attribute MAY be defined at resource creation (e.g., POST) or at
-// record replacement via a request (e.g., a PUT). The attribute SHALL NOT be updated.
-func AttributeMutabilityImmutable() AttributeMutability {
-	return AttributeMutability{m: attributeMutabilityImmutable}
-}
-
-// AttributeMutabilityReadOnly indicates that the attribute SHALL NOT be modified.
-func AttributeMutabilityReadOnly() AttributeMutability {
-	return AttributeMutability{m: attributeMutabilityReadOnly}
-}
-
-// AttributeMutabilityReadWrite indicates that the attribute MAY be updated and read at any time.
-// This is the default value.
-func AttributeMutabilityReadWrite() AttributeMutability {
-	return AttributeMutability{m: attributeMutabilityReadWrite}
-}
-
-// AttributeMutabilityWriteOnly indicates that the attribute MAY be updated at any time. Attribute values SHALL NOT
-// be returned (e.g., because the value is a stored hash).
-// Note: An attribute with a mutability of "writeOnly" usually also has a returned setting of "never".
-func AttributeMutabilityWriteOnly() AttributeMutability {
-	return AttributeMutability{m: attributeMutabilityWriteOnly}
-}
-
-type attributeMutability int
+type AttributeMutability int
 
 const (
-	attributeMutabilityReadWrite attributeMutability = iota
-	attributeMutabilityImmutable
-	attributeMutabilityReadOnly
-	attributeMutabilityWriteOnly
+	AttributeMutabilityReadWrite AttributeMutability = iota
+	AttributeMutabilityImmutable
+	AttributeMutabilityReadOnly
+	AttributeMutabilityWriteOnly
 )
 
-func (a attributeMutability) MarshalJSON() ([]byte, error) {
+func (a AttributeMutability) MarshalJSON() ([]byte, error) {
 	switch a {
-	case attributeMutabilityImmutable:
+	case AttributeMutabilityImmutable:
 		return json.Marshal("immutable")
-	case attributeMutabilityReadOnly:
+	case AttributeMutabilityReadOnly:
 		return json.Marshal("readOnly")
-	case attributeMutabilityWriteOnly:
+	case AttributeMutabilityWriteOnly:
 		return json.Marshal("writeOnly")
 	default:
 		return json.Marshal("readWrite")
@@ -83,141 +53,77 @@ const (
 
 // AttributeReturned is a single keyword indicating the circumstances under which an attribute and associated values are
 // returned in response to a GET request or in response to a PUT, POST, or PATCH request.
-type AttributeReturned struct {
-	r attributeReturned
-}
 
-// AttributeReturnedAlways indicates that the attribute is always returned.
-func AttributeReturnedAlways() AttributeReturned {
-	return AttributeReturned{r: attributeReturnedAlways}
-}
-
-// AttributeReturnedDefault indicates that the attribute is returned by default in all SCIM operation responses
-// where attribute values are returned.
-func AttributeReturnedDefault() AttributeReturned {
-	return AttributeReturned{r: attributeReturnedDefault}
-}
-
-// AttributeReturnedNever indicates that the attribute is never returned.
-func AttributeReturnedNever() AttributeReturned {
-	return AttributeReturned{r: attributeReturnedNever}
-}
-
-// AttributeReturnedRequest indicates that the attribute is returned in response to any PUT, POST, or PATCH
-// operations if the attribute was specified by the client (for example, the attribute was modified).
-func AttributeReturnedRequest() AttributeReturned {
-	return AttributeReturned{r: attributeReturnedRequest}
-}
-
-type attributeReturned int
+type AttributeReturned int
 
 const (
-	attributeReturnedDefault attributeReturned = iota
-	attributeReturnedAlways
-	attributeReturnedNever
-	attributeReturnedRequest
+	AttributeReturnedDefault AttributeReturned = iota
+	AttributeReturnedAlways
+	AttributeReturnedNever
+	AttributeReturnedRequest
 )
 
-func (a attributeReturned) MarshalJSON() ([]byte, error) {
+func (a AttributeReturned) MarshalJSON() ([]byte, error) {
 	switch a {
-	case attributeReturnedAlways:
+	case AttributeReturnedAlways:
 		return json.Marshal("always")
-	case attributeReturnedNever:
+	case AttributeReturnedNever:
 		return json.Marshal("never")
-	case attributeReturnedRequest:
+	case AttributeReturnedRequest:
 		return json.Marshal("request")
 	default:
 		return json.Marshal("default")
 	}
 }
 
-// AttributeDataType is a single keyword indicating the derived data type from JSON.
-type AttributeDataType struct {
-	t attributeType
-}
-
-// AttributeTypeDecimal indicates that the data type is a real number with at least one digit to the left and right of the period.
-// This is the default value.
-func AttributeTypeDecimal() AttributeDataType {
-	return AttributeDataType{t: attributeDataTypeDecimal}
-}
-
-// AttributeTypeInteger indicates that the data type is a whole number with no fractional digits or decimal.
-func AttributeTypeInteger() AttributeDataType {
-	return AttributeDataType{t: attributeDataTypeInteger}
-}
-
-type attributeType int
+type AttributeDataType int
 
 const (
-	attributeDataTypeDecimal attributeType = iota
-	attributeDataTypeInteger
+	AttributeDataTypeDecimal AttributeDataType = iota
+	AttributeDataTypeInteger
 
-	attributeDataTypeBinary
-	attributeDataTypeBoolean
-	attributeDataTypeComplex
-	attributeDataTypeDateTime
-	attributeDataTypeReference
-	attributeDataTypeString
+	AttributeDataTypeBinary
+	AttributeDataTypeBoolean
+	AttributeDataTypeComplex
+	AttributeDataTypeDateTime
+	AttributeDataTypeReference
+	AttributeDataTypeString
 )
 
-func (a attributeType) MarshalJSON() ([]byte, error) {
+func (a AttributeDataType) MarshalJSON() ([]byte, error) {
 	switch a {
-	case attributeDataTypeDecimal:
+	case AttributeDataTypeDecimal:
 		return json.Marshal("decimal")
-	case attributeDataTypeInteger:
+	case AttributeDataTypeInteger:
 		return json.Marshal("integer")
-	case attributeDataTypeBinary:
+	case AttributeDataTypeBinary:
 		return json.Marshal("binary")
-	case attributeDataTypeBoolean:
+	case AttributeDataTypeBoolean:
 		return json.Marshal("boolean")
-	case attributeDataTypeComplex:
+	case AttributeDataTypeComplex:
 		return json.Marshal("complex")
-	case attributeDataTypeDateTime:
+	case AttributeDataTypeDateTime:
 		return json.Marshal("dateTime")
-	case attributeDataTypeReference:
+	case AttributeDataTypeReference:
 		return json.Marshal("reference")
 	default:
 		return json.Marshal("string")
 	}
 }
 
-// AttributeUniqueness is a single keyword value that specifies how the service provider enforces uniqueness of attribute values.
-type AttributeUniqueness struct {
-	u attributeUniqueness
-}
-
-// AttributeUniquenessGlobal indicates that the value SHOULD be globally unique (e.g., an email address, a GUID, or
-// other value). No two resources on any server SHOULD possess the same value.
-func AttributeUniquenessGlobal() AttributeUniqueness {
-	return AttributeUniqueness{u: attributeUniquenessGlobal}
-}
-
-// AttributeUniquenessNone indicates that the values are not intended to be unique in any way.
-// This is the default value.
-func AttributeUniquenessNone() AttributeUniqueness {
-	return AttributeUniqueness{u: attributeUniquenessNone}
-}
-
-// AttributeUniquenessServer indicates that the value SHOULD be unique within the context of the current SCIM
-// endpoint (or tenancy).  No two resources on the same server SHOULD possess the same value.
-func AttributeUniquenessServer() AttributeUniqueness {
-	return AttributeUniqueness{u: attributeUniquenessServer}
-}
-
-type attributeUniqueness int
+type AttributeUniqueness int
 
 const (
-	attributeUniquenessNone attributeUniqueness = iota
-	attributeUniquenessGlobal
-	attributeUniquenessServer
+	AttributeUniquenessNone AttributeUniqueness = iota
+	AttributeUniquenessGlobal
+	AttributeUniquenessServer
 )
 
-func (a attributeUniqueness) MarshalJSON() ([]byte, error) {
+func (a AttributeUniqueness) MarshalJSON() ([]byte, error) {
 	switch a {
-	case attributeUniquenessGlobal:
+	case AttributeUniquenessGlobal:
 		return json.Marshal("global")
-	case attributeUniquenessServer:
+	case AttributeUniquenessServer:
 		return json.Marshal("server")
 	default:
 		return json.Marshal("none")

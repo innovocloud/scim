@@ -1,19 +1,17 @@
 package schema
 
 import (
-	"encoding/json"
 	"strings"
 
-	"github.com/elimity-com/scim/errors"
-	"github.com/elimity-com/scim/optional"
+	"github.com/innovocloud/scim/errors"
 )
 
 // Schema is a collection of attribute definitions that describe the contents of an entire or partial resource.
 type Schema struct {
 	Attributes  []CoreAttribute
-	Description optional.String
+	Description string `json:",omitempty"`
 	ID          string
-	Name        optional.String
+	Name        string `json:",omitempty"`
 }
 
 // Validate validates given resource based on the schema.
@@ -28,7 +26,7 @@ func (s Schema) Validate(resource interface{}) (map[string]interface{}, errors.V
 		var hit interface{}
 		var found bool
 		for k, v := range core {
-			if strings.EqualFold(attribute.name, k) {
+			if strings.EqualFold(attribute.Name, k) {
 				if found {
 					return nil, errors.ValidationErrorInvalidSyntax
 				}
@@ -41,7 +39,7 @@ func (s Schema) Validate(resource interface{}) (map[string]interface{}, errors.V
 		if scimErr != errors.ValidationErrorNil {
 			return nil, scimErr
 		}
-		attributes[attribute.name] = attr
+		attributes[attribute.Name] = attr
 	}
 	return attributes, errors.ValidationErrorNil
 }
@@ -53,7 +51,7 @@ func (s Schema) ValidatePatchOperationValue(operation string, operationValue map
 		scimErr := errors.ValidationErrorNil
 
 		for _, attribute := range s.Attributes {
-			if strings.EqualFold(attribute.name, k) {
+			if strings.EqualFold(attribute.Name, k) {
 				attr = &attribute
 				break
 			}
@@ -83,22 +81,22 @@ func cannotBePatched(op string, attr CoreAttribute) bool {
 }
 
 func isImmutable(op string, attr CoreAttribute) bool {
-	return attr.mutability == attributeMutabilityImmutable && (op == "replace" || op == "remove")
+	return attr.Mutability == AttributeMutabilityImmutable && (op == "replace" || op == "remove")
 }
 
 func isReadOnly(attr CoreAttribute) bool {
-	return attr.mutability == attributeMutabilityReadOnly
+	return attr.Mutability == AttributeMutabilityReadOnly
 }
 
 // MarshalJSON converts the schema struct to its corresponding json representation.
-func (s Schema) MarshalJSON() ([]byte, error) {
-	return json.Marshal(map[string]interface{}{
-		"id":          s.ID,
-		"name":        s.Name,
-		"description": s.Description.Value(),
-		"attributes":  s.getRawAttributes(),
-	})
-}
+// func (s Schema) MarshalJSON() ([]byte, error) {
+// 	return json.Marshal(map[string]interface{}{
+// 		"id":          s.ID,
+// 		"name":        s.Name,
+// 		"description": s.Description,
+// 		"attributes":  s.getRawAttributes(),
+// 	})
+// }
 
 func (s Schema) getRawAttributes() []map[string]interface{} {
 	attributes := make([]map[string]interface{}, len(s.Attributes))

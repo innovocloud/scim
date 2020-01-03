@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/elimity-com/scim/errors"
+	"github.com/innovocloud/scim/errors"
 )
 
 func ExampleResourceHandler() {
@@ -50,7 +50,7 @@ func (h testResourceHandler) Get(r *http.Request, id string) (Resource, errors.G
 	}, errors.GetErrorNil
 }
 
-func (h testResourceHandler) GetAll(r *http.Request, params ListRequestParams) (Page, errors.GetError) {
+func (h testResourceHandler) GetAll(r *http.Request, params ListRequestParams) (ListResponse, errors.GetError) {
 	resources := make([]Resource, 0)
 	i := 1
 
@@ -68,7 +68,7 @@ func (h testResourceHandler) GetAll(r *http.Request, params ListRequestParams) (
 		i++
 	}
 
-	return Page{
+	return ListResponse{
 		TotalResults: len(h.data),
 		Resources:    resources,
 	}, errors.GetErrorNil

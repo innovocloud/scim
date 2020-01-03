@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/elimity-com/scim/errors"
+	"github.com/innovocloud/scim/errors"
 )
 
 type scimType string

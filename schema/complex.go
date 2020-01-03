@@ -1,10 +1,8 @@
 package schema
 
-import "github.com/elimity-com/scim/optional"
-
 // ComplexParams are the parameters used to create a complex attribute.
 type ComplexParams struct {
-	Description   optional.String
+	Description   string `json:",omitempty"`
 	MultiValued   bool
 	Mutability    AttributeMutability
 	Name          string

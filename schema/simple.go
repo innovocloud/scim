@@ -1,34 +1,32 @@
 package schema
 
-import "github.com/elimity-com/scim/optional"
-
 // SimpleParams are the parameters used to create a simple attribute.
 type SimpleParams struct {
 	canonicalValues []string
 	caseExact       bool
-	description     optional.String
+	Description     string `json:",omitempty"`
 	multiValued     bool
-	mutability      attributeMutability
+	mutability      AttributeMutability
 	name            string
 	referenceTypes  []AttributeReferenceType
 	required        bool
-	returned        attributeReturned
-	typ             attributeType
-	uniqueness      attributeUniqueness
+	returned        AttributeReturned
+	typ             AttributeDataType
+	uniqueness      AttributeUniqueness
 }
 
 // SimpleBinaryParams converts given binary parameters to their corresponding simple parameters.
 func SimpleBinaryParams(params BinaryParams) SimpleParams {
 	return SimpleParams{
 		caseExact:   true,
-		description: params.Description,
+		Description: params.Description,
 		multiValued: params.MultiValued,
-		mutability:  params.Mutability.m,
+		mutability:  params.Mutability,
 		name:        params.Name,
 		required:    params.Required,
-		returned:    params.Returned.r,
-		typ:         attributeDataTypeBinary,
-		uniqueness:  attributeUniquenessNone,
+		returned:    params.Returned,
+		typ:         AttributeDataTypeBinary,
+		uniqueness:  AttributeUniquenessNone,
 	}
 }
 
@@ -36,7 +34,7 @@ func SimpleBinaryParams(params BinaryParams) SimpleParams {
 // The attribute value MUST be base64 encoded. In JSON representation, the encoded values are represented as a JSON string.
 // A binary is case exact and has no uniqueness.
 type BinaryParams struct {
-	Description optional.String
+	Description string `json:",omitempty"`
 	MultiValued bool
 	Mutability  AttributeMutability
 	Name        string
@@ -48,21 +46,21 @@ type BinaryParams struct {
 func SimpleBooleanParams(params BooleanParams) SimpleParams {
 	return SimpleParams{
 		caseExact:   false,
-		description: params.Description,
+		Description: params.Description,
 		multiValued: params.MultiValued,
-		mutability:  params.Mutability.m,
+		mutability:  params.Mutability,
 		name:        params.Name,
 		required:    params.Required,
-		returned:    params.Returned.r,
-		typ:         attributeDataTypeBoolean,
-		uniqueness:  attributeUniquenessNone,
+		returned:    params.Returned,
+		typ:         AttributeDataTypeBoolean,
+		uniqueness:  AttributeUniquenessNone,
 	}
 }
 
 // BooleanParams are the parameters used to create a simple attribute with a data type of "boolean".
 // The literal "true" or "false". A boolean has no case sensitivity or uniqueness.
 type BooleanParams struct {
-	Description optional.String
+	Description string `json:",omitempty"`
 	MultiValued bool
 	Mutability  AttributeMutability
 	Name        string
@@ -74,21 +72,21 @@ type BooleanParams struct {
 func SimpleDateTimeParams(params DateTimeParams) SimpleParams {
 	return SimpleParams{
 		caseExact:   false,
-		description: params.Description,
+		Description: params.Description,
 		multiValued: params.MultiValued,
-		mutability:  params.Mutability.m,
+		mutability:  params.Mutability,
 		name:        params.Name,
 		required:    params.Required,
-		returned:    params.Returned.r,
-		typ:         attributeDataTypeDateTime,
-		uniqueness:  attributeUniquenessNone,
+		returned:    params.Returned,
+		typ:         AttributeDataTypeDateTime,
+		uniqueness:  AttributeUniquenessNone,
 	}
 }
 
 // DateTimeParams are the parameters used to create a simple attribute with a data type of "dateTime".
 // A DateTime value (e.g., 2008-01-23T04:56:22Z). A date time format has no case sensitivity or uniqueness.
 type DateTimeParams struct {
-	Description optional.String
+	Description string `json:",omitempty"`
 	MultiValued bool
 	Mutability  AttributeMutability
 	Name        string
@@ -100,21 +98,21 @@ type DateTimeParams struct {
 func SimpleNumberParams(params NumberParams) SimpleParams {
 	return SimpleParams{
 		caseExact:   false,
-		description: params.Description,
+		Description: params.Description,
 		multiValued: params.MultiValued,
-		mutability:  params.Mutability.m,
+		mutability:  params.Mutability,
 		name:        params.Name,
 		required:    params.Required,
-		returned:    params.Returned.r,
-		typ:         params.Type.t,
-		uniqueness:  params.Uniqueness.u,
+		returned:    params.Returned,
+		typ:         params.Type,
+		uniqueness:  params.Uniqueness,
 	}
 }
 
 // NumberParams are the parameters used to create a simple attribute with a data type of "decimal" or "integer".
 // A number has no case sensitivity.
 type NumberParams struct {
-	Description optional.String
+	Description string `json:",omitempty"`
 	MultiValued bool
 	Mutability  AttributeMutability
 	Name        string
@@ -128,15 +126,15 @@ type NumberParams struct {
 func SimpleReferenceParams(params ReferenceParams) SimpleParams {
 	return SimpleParams{
 		caseExact:      true,
-		description:    params.Description,
+		Description:    params.Description,
 		multiValued:    params.MultiValued,
-		mutability:     params.Mutability.m,
+		mutability:     params.Mutability,
 		name:           params.Name,
 		referenceTypes: params.ReferenceTypes,
 		required:       params.Required,
-		returned:       params.Returned.r,
-		typ:            attributeDataTypeReference,
-		uniqueness:     params.Uniqueness.u,
+		returned:       params.Returned,
+		typ:            AttributeDataTypeReference,
+		uniqueness:     params.Uniqueness,
 	}
 }
 
@@ -144,7 +142,7 @@ func SimpleReferenceParams(params ReferenceParams) SimpleParams {
 // A reference is case exact. A reference has a "referenceTypes" attribute that indicates what types of resources may
 // be linked.
 type ReferenceParams struct {
-	Description    optional.String
+	Description    string `json:",omitempty"`
 	MultiValued    bool
 	Mutability     AttributeMutability
 	Name           string
@@ -159,14 +157,14 @@ func SimpleStringParams(params StringParams) SimpleParams {
 	return SimpleParams{
 		canonicalValues: params.CanonicalValues,
 		caseExact:       params.CaseExact,
-		description:     params.Description,
+		Description:     params.Description,
 		multiValued:     params.MultiValued,
-		mutability:      params.Mutability.m,
+		mutability:      params.Mutability,
 		name:            params.Name,
 		required:        params.Required,
-		returned:        params.Returned.r,
-		typ:             attributeDataTypeString,
-		uniqueness:      params.Uniqueness.u,
+		returned:        params.Returned,
+		typ:             AttributeDataTypeString,
+		uniqueness:      params.Uniqueness,
 	}
 }
 
@@ -175,7 +173,7 @@ func SimpleStringParams(params StringParams) SimpleParams {
 type StringParams struct {
 	CanonicalValues []string
 	CaseExact       bool
-	Description     optional.String
+	Description     string `json:",omitempty"`
 	MultiValued     bool
 	Mutability      AttributeMutability
 	Name            string

@@ -8,19 +8,18 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/elimity-com/scim/errors"
-	"github.com/elimity-com/scim/optional"
-	"github.com/elimity-com/scim/schema"
+	"github.com/innovocloud/scim/errors"
+	"github.com/innovocloud/scim/schema"
 )
 
 // ResourceType specifies the metadata about a resource type.
 type ResourceType struct {
 	// ID is the resource type's server unique id. This is often the same value as the "name" attribute.
-	ID optional.String
+	ID string `json:",omitempty"`
 	// Name is the resource type name. This name is referenced by the "meta.resourceType" attribute in all resources.
 	Name string
 	// Description is the resource type's human-readable description.
-	Description optional.String
+	Description string `json:",omitempty"`
 	// Endpoint is the resource type's HTTP-addressable endpoint relative to the Base URL of the service provider,
 	// e.g., "/Users".
 	Endpoint string
@@ -79,17 +78,17 @@ func (t ResourceType) validate(raw []byte) (ResourceAttributes, errors.Validatio
 	return attributes, errors.ValidationErrorNil
 }
 
-func (t ResourceType) getRaw() map[string]interface{} {
-	return map[string]interface{}{
-		"schemas":          []string{"urn:ietf:params:scim:schemas:core:2.0:ResourceType"},
-		"id":               t.ID.Value(),
-		"name":             t.Name,
-		"description":      t.Description.Value(),
-		"endpoint":         t.Endpoint,
-		"schema":           t.Schema.ID,
-		"schemaExtensions": t.getRawSchemaExtensions(),
-	}
-}
+// func (t ResourceType) getRaw() map[string]interface{} {
+// 	return map[string]interface{}{
+// 		"schemas":          []string{"urn:ietf:params:scim:schemas:core:2.0:ResourceType"},
+// 		"id":               t.ID,
+// 		"name":             t.Name,
+// 		"description":      t.Description,
+// 		"endpoint":         t.Endpoint,
+// 		"schema":           t.Schema.ID,
+// 		"schemaExtensions": t.getRawSchemaExtensions(),
+// 	}
+// }
 
 func (t ResourceType) getRawSchemaExtensions() []map[string]interface{} {
 	schemas := make([]map[string]interface{}, 0)

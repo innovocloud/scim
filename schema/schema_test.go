@@ -5,8 +5,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/elimity-com/scim/errors"
-	"github.com/elimity-com/scim/optional"
+	"github.com/innovocloud/scim/errors"
 )
 
 func TestInvalidAttributeName(t *testing.T) {
@@ -18,8 +17,8 @@ func TestInvalidAttributeName(t *testing.T) {
 
 	_ = Schema{
 		ID:          "urn:ietf:params:scim:schemas:core:2.0:User",
-		Name:        optional.NewString("User"),
-		Description: optional.NewString("User Account"),
+		Name:        "User",
+		Description: "User Account",
 		Attributes: []CoreAttribute{
 			SimpleCoreAttribute(SimpleStringParams(StringParams{Name: "_Invalid"})),
 		},
@@ -28,8 +27,8 @@ func TestInvalidAttributeName(t *testing.T) {
 
 var testSchema = Schema{
 	ID:          "empty",
-	Name:        optional.NewString("test"),
-	Description: optional.String{},
+	Name:        "test",
+	Description: "",
 	Attributes: []CoreAttribute{
 		SimpleCoreAttribute(SimpleStringParams(StringParams{
 			Name:     "required",
@@ -59,11 +58,11 @@ var testSchema = Schema{
 		})),
 		SimpleCoreAttribute(SimpleNumberParams(NumberParams{
 			Name: "integer",
-			Type: AttributeTypeInteger(),
+			Type: AttributeDataTypeInteger,
 		})),
 		SimpleCoreAttribute(SimpleNumberParams(NumberParams{
 			Name: "decimal",
-			Type: AttributeTypeDecimal(),
+			Type: AttributeDataTypeDecimal,
 		})),
 	},
 }
@@ -212,7 +211,7 @@ func TestJSONMarshalling(t *testing.T) {
 		return
 	}
 
-	actualJSON, err := testSchema.MarshalJSON()
+	actualJSON, err := json.Marshal(testSchema)
 
 	if err != nil {
 		t.Errorf("Failed to marshal schema into JSON")

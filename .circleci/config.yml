@@ -2,7 +2,7 @@ executors:
   main:
     docker:
       - image: circleci/golang
-    working_directory: /go/src/github.com/elimity-com/scim
+    working_directory: /go/src/github.com/innovocloud/scim
 
 jobs:
   lint:

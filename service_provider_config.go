@@ -1,7 +1,7 @@
 package scim
 
 import (
-	"github.com/elimity-com/scim/optional"
+	"encoding/json"
 )
 
 // ServiceProviderConfig enables a service provider to discover SCIM specification features in a standardized form as
@@ -9,32 +9,42 @@ import (
 type ServiceProviderConfig struct {
 	// DocumentationURI is an HTTP-addressable URL pointing to the service provider's human-consumable help
 	// documentation.
-	DocumentationURI optional.String
+	DocumentationURI string `json:"documentationUri,omitempty"`
 	// AuthenticationSchemes is a multi-valued complex type that specifies supported authentication scheme properties.
-	AuthenticationSchemes []AuthenticationScheme
+	AuthenticationSchemes []AuthenticationScheme `json:",omitempty"`
 	// MaxResults denotes the the integer value specifying the maximum number of resources returned in a response. It defaults to 100.
 	MaxResults int
 	// SupportFiltering whether you SCIM implementation will support filtering.
 	SupportFiltering bool
 	// SupportPatch whether your SCIM implementation will support patch requests.
-	SupportPatch bool
+	SupportPatch          bool
+	SupportChangePassword bool
+	SupportSort           bool
+	SupportEtag           bool
+	SupportBulk           bool
+	BulkMaxOpts           int
+	BulkMaxPayload        int
+	// OmitSchemasHeader is set to true to not return the list metadata on the /Schemas endpoint for compatibility with OneIdentity products
+	OmitSchemasHeader bool
+	// OmitResourceTypesHeader is set to true to not return the list metadata on the /ResourceTypes endpoint for compatibility with OneIdentity products
+	OmitResourceTypesHeader bool
 }
 
 // AuthenticationScheme specifies a supported authentication scheme property.
 type AuthenticationScheme struct {
 	// Type is the authentication scheme. This specification defines the values "oauth", "oauth2", "oauthbearertoken",
 	// "httpbasic", and "httpdigest".
-	Type AuthenticationType
+	Type AuthenticationType `json:"type"`
 	// Name is the common authentication scheme name, e.g., HTTP Basic.
-	Name string
+	Name string `json:"name"`
 	// Description of the authentication scheme.
-	Description string
+	Description string `json:"description"`
 	// SpecURI is an HTTP-addressable URL pointing to the authentication scheme's specification.
-	SpecURI optional.String
+	SpecURI string `json:"specUri,omitempty"`
 	// DocumentationURI is an HTTP-addressable URL pointing to the authentication scheme's usage documentation.
-	DocumentationURI optional.String
+	DocumentationURI string `json:",omitempty"`
 	// Primary is a boolean value indicating the 'primary' or preferred authentication scheme.
-	Primary bool
+	Primary bool `json:"primary"`
 }
 
 // AuthenticationType is a single keyword indicating the authentication type of the authentication scheme.
@@ -53,33 +63,39 @@ const (
 	AuthenticationTypeHTTPDigest AuthenticationType = "httpdigest"
 )
 
-func (config ServiceProviderConfig) getRaw() map[string]interface{} {
-	return map[string]interface{}{
+// MarshalJSON implements the pkg/encoding/json/Marshaller interface for ServiceProviderConfig
+func (config ServiceProviderConfig) MarshalJSON() ([]byte, error) {
+	marshalled := map[string]interface{}{
 		"schemas":          []string{"urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"},
-		"documentationUri": config.DocumentationURI.Value(),
+		"documentationUri": config.DocumentationURI,
 		"patch": map[string]bool{
 			"supported": config.SupportPatch,
 		},
 		"bulk": map[string]interface{}{
-			"supported":      false,
-			"maxOperations":  1000,
-			"maxPayloadSize": 1048576,
+			"supported":      config.SupportBulk,
+			"maxOperations":  config.BulkMaxOpts,
+			"maxPayloadSize": config.BulkMaxPayload,
 		},
 		"filter": map[string]interface{}{
 			"supported":  config.SupportFiltering,
 			"maxResults": config.MaxResults,
 		},
 		"changePassword": map[string]bool{
-			"supported": false,
+			"supported": config.SupportChangePassword,
 		},
 		"sort": map[string]bool{
-			"supported": false,
+			"supported": config.SupportSort,
 		},
 		"etag": map[string]bool{
-			"supported": false,
+			"supported": config.SupportEtag,
 		},
-		"authenticationSchemes": config.getRawAuthenticationSchemes(),
 	}
+
+	if config.AuthenticationSchemes != nil {
+		marshalled["authenticationSchemes"] = config.AuthenticationSchemes
+	}
+
+	return json.Marshal(marshalled)
 }
 
 // getItemsPerPage retrieves the configured default count. It falls back to 100 when not configured.
@@ -88,19 +104,4 @@ func (config ServiceProviderConfig) getItemsPerPage() int {
 		return fallbackCount
 	}
 	return config.MaxResults
-}
-
-func (config ServiceProviderConfig) getRawAuthenticationSchemes() []map[string]interface{} {
-	rawAuthScheme := make([]map[string]interface{}, 0)
-	for _, auth := range config.AuthenticationSchemes {
-		rawAuthScheme = append(rawAuthScheme, map[string]interface{}{
-			"description":      auth.Description,
-			"documentationUri": auth.DocumentationURI.Value(),
-			"name":             auth.Name,
-			"primary":          auth.Primary,
-			"specUri":          auth.SpecURI.Value(),
-			"type":             auth.Type,
-		})
-	}
-	return rawAuthScheme
 }

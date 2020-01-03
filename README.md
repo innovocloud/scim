@@ -1,8 +1,8 @@
 ![scim-logo](LOGO.png)
 
-[![GoDoc](https://godoc.org/github.com/elimity-com/scim?status.svg)](https://godoc.org/github.com/elimity-com/scim)
+[![GoDoc](https://godoc.org/github.com/innovocloud/scim?status.svg)](https://godoc.org/github.com/innovocloud/scim)
 
-This is an open source implementation of the [SCIM v2.0](http://www.simplecloud.info/#Specification) specification for use in Golang.
+This is an open source implementation of the [SCIM v2.0](http://www.simplecloud.info/#Specification) specification for use in Golang, forked from the elmity-com implementation.
 SCIM defines a flexible schema mechanism and REST API for managing identity data.
 The goal is to reduce the complexity of user management operations by providing patterns for exchanging schemas using HTTP.
 
@@ -13,12 +13,12 @@ The following features are supported:
 - GET for `/Schemas`, `/ServiceProviderConfig` and `/ResourceTypes`
 - CRUD (POST/GET/PUT/DELETE and PATCH) for your own resource types (i.e. `/Users`, `/Groups`, `/Employees`, ...)
 
-Other optional features such as sorting, bulk, etc. are **not** supported in this version.
+Other optional features such as sorting, bulk, etc. are not explicitly supported, but can be 
 
 ## Installation
 Assuming you already have a (recent) version of Go installed, you can get the code with go get:
 ```
-go get github.com/elimity-com/scim
+go get github.com/innovocloud/scim
 ```
 
 ## Usage
@@ -31,7 +31,6 @@ config := scim.ServiceProviderConfig{
     DocumentationURI: optional.NewString("www.example.com/scim"),
 }
 ```
-**!** no additional features/operations are supported in this version.
 
 ### 2. Create all supported schemas and extensions.
 [RFC Schema](https://tools.ietf.org/html/rfc7643#section-2) |
@@ -110,18 +109,14 @@ log.Fatal(http.ListenAndServe(":8080", server))
 ```
 
 ## Contributing
-We are happy to review pull requests,
-but please first discuss the change you wish to make via issue, email,
-or any other method with the owners of this repository before making a change.
+We are happy to review pull requests, but please first discuss the change you wish to make via issue, email, or any other method with the owners of this repository before making a change.
 
 If you would like to propose a change please ensure the following:
 - all checks of CircleCI are passing ([GolangCI-Lint](https://github.com/golangci/golangci-lint): `goimports` and `golint`)
 - all already existing tests are passing
 - you have written tests that cover the code you are making
 - there is documentation for at least all public functions you have added
-- new public functions and structures are kept to a minimum
-- the same practices are applied (such as the anatomy of methods, names, etc.)
 - your changes are compliant with SCIM v2.0 (released as
 [RFC7642](https://tools.ietf.org/html/rfc7642),
-[RFC7643](https://tools.ietf.org/html/rfc7643) and
+[RFC7643](https://tools.ietf.org/html/rfc7643), and
 [RFC7644](https://tools.ietf.org/html/rfc7644) under [IETF](https://ietf.org/))

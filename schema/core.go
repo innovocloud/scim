@@ -7,8 +7,7 @@ import (
 	"strings"
 
 	datetime "github.com/di-wu/xsd-datetime"
-	"github.com/elimity-com/scim/errors"
-	"github.com/elimity-com/scim/optional"
+	"github.com/innovocloud/scim/errors"
 )
 
 // SimpleCoreAttribute creates a non-complex attribute based on given parameters.
@@ -16,17 +15,17 @@ func SimpleCoreAttribute(params SimpleParams) CoreAttribute {
 	checkAttributeName(params.name)
 
 	return CoreAttribute{
-		canonicalValues: params.canonicalValues,
-		caseExact:       params.caseExact,
-		description:     params.description,
-		multiValued:     params.multiValued,
-		mutability:      params.mutability,
-		name:            params.name,
-		referenceTypes:  params.referenceTypes,
-		required:        params.required,
-		returned:        params.returned,
-		typ:             params.typ,
-		uniqueness:      params.uniqueness,
+		CanonicalValues: params.canonicalValues,
+		CaseExact:       params.caseExact,
+		Description:     params.Description,
+		MultiValued:     params.multiValued,
+		Mutability:      params.mutability,
+		Name:            params.name,
+		ReferenceTypes:  params.referenceTypes,
+		Required:        params.required,
+		Returned:        params.returned,
+		Typ:             params.typ,
+		Uniqueness:      params.uniqueness,
 	}
 }
 
@@ -44,60 +43,60 @@ func ComplexCoreAttribute(params ComplexParams) CoreAttribute {
 		names[name] = i
 
 		sa = append(sa, CoreAttribute{
-			canonicalValues: a.canonicalValues,
-			caseExact:       a.caseExact,
-			description:     a.description,
-			multiValued:     a.multiValued,
-			mutability:      a.mutability,
-			name:            a.name,
-			referenceTypes:  a.referenceTypes,
-			required:        a.required,
-			returned:        a.returned,
-			typ:             a.typ,
-			uniqueness:      a.uniqueness,
+			CanonicalValues: a.canonicalValues,
+			CaseExact:       a.caseExact,
+			Description:     a.Description,
+			MultiValued:     a.multiValued,
+			Mutability:      a.mutability,
+			Name:            a.name,
+			ReferenceTypes:  a.referenceTypes,
+			Required:        a.required,
+			Returned:        a.returned,
+			Typ:             a.typ,
+			Uniqueness:      a.uniqueness,
 		})
 	}
 
 	return CoreAttribute{
-		description:   params.Description,
-		multiValued:   params.MultiValued,
-		mutability:    params.Mutability.m,
-		name:          params.Name,
-		required:      params.Required,
-		returned:      params.Returned.r,
+		Name:          params.Name,
+		Description:   params.Description,
+		MultiValued:   params.MultiValued,
+		Mutability:    params.Mutability,
+		Required:      params.Required,
+		Returned:      params.Returned,
 		subAttributes: sa,
-		typ:           attributeDataTypeComplex,
-		uniqueness:    params.Uniqueness.u,
+		Typ:           AttributeDataTypeComplex,
+		Uniqueness:    params.Uniqueness,
 	}
 }
 
 // CoreAttribute represents those attributes that sit at the top level of the JSON object together with the common
 // attributes (such as the resource "id").
 type CoreAttribute struct {
-	canonicalValues []string
-	caseExact       bool
-	description     optional.String
-	multiValued     bool
-	mutability      attributeMutability
-	name            string
-	referenceTypes  []AttributeReferenceType
-	required        bool
-	returned        attributeReturned
+	Name            string
+	Typ             AttributeDataType `json:"type"`
+	MultiValued     bool
+	Description     string `json:",omitempty"`
+	Required        bool
+	CaseExact       bool
+	CanonicalValues []string
+	Mutability      AttributeMutability
+	Returned        AttributeReturned
+	Uniqueness      AttributeUniqueness
+	ReferenceTypes  []AttributeReferenceType
 	subAttributes   []CoreAttribute
-	typ             attributeType
-	uniqueness      attributeUniqueness
 }
 
 func (a CoreAttribute) validate(attribute interface{}) (interface{}, errors.ValidationError) {
 	// return false if the attribute is not present but required.
 	if attribute == nil {
-		if !a.required {
+		if !a.Required {
 			return nil, errors.ValidationErrorNil
 		}
 		return nil, errors.ValidationErrorInvalidValue
 	}
 
-	if a.multiValued {
+	if a.MultiValued {
 		// return false if the multivalued attribute is not a slice.
 		arr, ok := attribute.([]interface{})
 		if !ok {
@@ -105,7 +104,7 @@ func (a CoreAttribute) validate(attribute interface{}) (interface{}, errors.Vali
 		}
 
 		// return false if the multivalued attribute is empty.
-		if a.required && len(arr) == 0 {
+		if a.Required && len(arr) == 0 {
 			return nil, errors.ValidationErrorInvalidValue
 		}
 
@@ -124,8 +123,8 @@ func (a CoreAttribute) validate(attribute interface{}) (interface{}, errors.Vali
 }
 
 func (a CoreAttribute) validateSingular(attribute interface{}) (interface{}, errors.ValidationError) {
-	switch a.typ {
-	case attributeDataTypeBinary:
+	switch a.Typ {
+	case AttributeDataTypeBinary:
 		bin, ok := attribute.(string)
 		if !ok {
 			return nil, errors.ValidationErrorInvalidValue
@@ -141,13 +140,13 @@ func (a CoreAttribute) validateSingular(attribute interface{}) (interface{}, err
 		}
 
 		return bin, errors.ValidationErrorNil
-	case attributeDataTypeBoolean:
+	case AttributeDataTypeBoolean:
 		b, ok := attribute.(bool)
 		if !ok {
 			return nil, errors.ValidationErrorInvalidValue
 		}
 		return b, errors.ValidationErrorNil
-	case attributeDataTypeComplex:
+	case AttributeDataTypeComplex:
 		complex, ok := attribute.(map[string]interface{})
 		if !ok {
 			return nil, errors.ValidationErrorInvalidValue
@@ -158,7 +157,7 @@ func (a CoreAttribute) validateSingular(attribute interface{}) (interface{}, err
 			var hit interface{}
 			var found bool
 			for k, v := range complex {
-				if strings.EqualFold(sub.name, k) {
+				if strings.EqualFold(sub.Name, k) {
 					if found {
 						return nil, errors.ValidationErrorInvalidSyntax
 					}
@@ -171,10 +170,10 @@ func (a CoreAttribute) validateSingular(attribute interface{}) (interface{}, err
 			if scimErr != errors.ValidationErrorNil {
 				return nil, scimErr
 			}
-			attributes[sub.name] = attr
+			attributes[sub.Name] = attr
 		}
 		return attributes, errors.ValidationErrorNil
-	case attributeDataTypeDateTime:
+	case AttributeDataTypeDateTime:
 		date, ok := attribute.(string)
 		if !ok {
 			return nil, errors.ValidationErrorInvalidValue
@@ -184,17 +183,17 @@ func (a CoreAttribute) validateSingular(attribute interface{}) (interface{}, err
 			return nil, errors.ValidationErrorInvalidValue
 		}
 		return date, errors.ValidationErrorNil
-	case attributeDataTypeDecimal:
+	case AttributeDataTypeDecimal:
 		if reflect.TypeOf(attribute).Kind() != reflect.Float64 {
 			return nil, errors.ValidationErrorInvalidValue
 		}
 		return attribute.(float64), errors.ValidationErrorNil
-	case attributeDataTypeInteger:
+	case AttributeDataTypeInteger:
 		if reflect.TypeOf(attribute).Kind() != reflect.Int {
 			return nil, errors.ValidationErrorInvalidValue
 		}
 		return attribute.(int), errors.ValidationErrorNil
-	case attributeDataTypeString, attributeDataTypeReference:
+	case AttributeDataTypeString, AttributeDataTypeReference:
 		s, ok := attribute.(string)
 		if !ok {
 			return nil, errors.ValidationErrorInvalidValue
@@ -213,17 +212,17 @@ func (a *CoreAttribute) getRawAttributes() map[string]interface{} {
 	}
 
 	return map[string]interface{}{
-		"canonicalValues": a.canonicalValues,
-		"caseExact":       a.caseExact,
-		"description":     a.description.Value(),
-		"multiValued":     a.multiValued,
-		"mutability":      a.mutability,
-		"name":            a.name,
-		"referenceTypes":  a.referenceTypes,
-		"required":        a.required,
-		"returned":        a.returned,
+		"canonicalValues": a.CanonicalValues,
+		"caseExact":       a.CaseExact,
+		"description":     a.Description,
+		"multiValued":     a.MultiValued,
+		"mutability":      a.Mutability,
+		"name":            a.Name,
+		"referenceTypes":  a.ReferenceTypes,
+		"required":        a.Required,
+		"returned":        a.Returned,
 		"subAttributes":   rawSubAttributes,
-		"type":            a.typ,
-		"uniqueness":      a.uniqueness,
+		"type":            a.Typ,
+		"uniqueness":      a.Uniqueness,
 	}
 }

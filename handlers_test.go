@@ -8,20 +8,19 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/elimity-com/scim/optional"
-	"github.com/elimity-com/scim/schema"
+	"github.com/innovocloud/scim/schema"
 )
 
 func newTestServer() Server {
 	userSchema := schema.Schema{
 		ID:          "urn:ietf:params:scim:schemas:core:2.0:User",
-		Name:        optional.NewString("User"),
-		Description: optional.NewString("User Account"),
+		Name:        "User",
+		Description: "User Account",
 		Attributes: []schema.CoreAttribute{
 			schema.SimpleCoreAttribute(schema.SimpleStringParams(schema.StringParams{
 				Name:       "userName",
 				Required:   true,
-				Uniqueness: schema.AttributeUniquenessServer(),
+				Uniqueness: schema.AttributeUniquenessServer,
 			})),
 			schema.SimpleCoreAttribute(schema.SimpleBooleanParams(schema.BooleanParams{
 				Name:     "active",
@@ -30,12 +29,12 @@ func newTestServer() Server {
 			schema.SimpleCoreAttribute(schema.SimpleStringParams(schema.StringParams{
 				Name:       "readonlyThing",
 				Required:   false,
-				Mutability: schema.AttributeMutabilityReadOnly(),
+				Mutability: schema.AttributeMutabilityReadOnly,
 			})),
 			schema.SimpleCoreAttribute(schema.SimpleStringParams(schema.StringParams{
 				Name:       "immutableThing",
 				Required:   false,
-				Mutability: schema.AttributeMutabilityImmutable(),
+				Mutability: schema.AttributeMutabilityImmutable,
 			})),
 			schema.ComplexCoreAttribute(schema.ComplexParams{
 				Name:     "Name",
@@ -78,8 +77,8 @@ func newTestServer() Server {
 
 	userSchemaExtension := schema.Schema{
 		ID:          "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User",
-		Name:        optional.NewString("EnterpriseUser"),
-		Description: optional.NewString("Enterprise User"),
+		Name:        "EnterpriseUser",
+		Description: "Enterprise User",
 		Attributes: []schema.CoreAttribute{
 			schema.SimpleCoreAttribute(schema.SimpleStringParams(schema.StringParams{
 				Name: "employeeNumber",
@@ -94,18 +93,18 @@ func newTestServer() Server {
 		Config: ServiceProviderConfig{},
 		ResourceTypes: []ResourceType{
 			{
-				ID:          optional.NewString("User"),
+				ID:          "User",
 				Name:        "User",
 				Endpoint:    "/Users",
-				Description: optional.NewString("User Account"),
+				Description: "User Account",
 				Schema:      userSchema,
 				Handler:     newTestResourceHandler(),
 			},
 			{
-				ID:          optional.NewString("EnterpriseUser"),
+				ID:          "EnterpriseUser",
 				Name:        "EnterpriseUser",
 				Endpoint:    "/EnterpriseUser",
-				Description: optional.NewString("Enterprise User Account"),
+				Description: "Enterprise User Account",
 				Schema:      userSchema,
 				SchemaExtensions: []SchemaExtension{
 					{Schema: userSchemaExtension},
@@ -150,7 +149,7 @@ func TestServerSchemasEndpoint(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
 
-	var response listResponse
+	var response ListResponse
 	if err := json.Unmarshal(rr.Body.Bytes(), &response); err != nil {
 		t.Error(err)
 	}
@@ -213,7 +212,7 @@ func TestServerResourceTypesHandler(t *testing.T) {
 		t.Fatalf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
 
-	var response listResponse
+	var response ListResponse
 	if err := json.Unmarshal(rr.Body.Bytes(), &response); err != nil {
 		t.Fatal(err)
 	}
@@ -348,7 +347,7 @@ func TestServerResourcesGetHandler(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
 
-	var response listResponse
+	var response ListResponse
 	if err := json.Unmarshal(rr.Body.Bytes(), &response); err != nil {
 		t.Error(err)
 	}
@@ -367,7 +366,7 @@ func TestServerResourcesGetHandlerPagination(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
 
-	var response listResponse
+	var response ListResponse
 	if err := json.Unmarshal(rr.Body.Bytes(), &response); err != nil {
 		t.Error(err)
 	}
@@ -386,7 +385,7 @@ func TestServerResourcesGetHandlerMaxCount(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
 
-	var response listResponse
+	var response ListResponse
 	if err := json.Unmarshal(rr.Body.Bytes(), &response); err != nil {
 		t.Error(err)
 	}

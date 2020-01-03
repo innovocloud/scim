@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	scim "github.com/di-wu/scim-filter-parser"
-	"github.com/elimity-com/scim/schema"
+	"github.com/innovocloud/scim/schema"
 )
 
 const (
