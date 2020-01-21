@@ -10,51 +10,62 @@ import (
 	"github.com/innovocloud/scim/errors"
 )
 
-// SimpleCoreAttribute creates a non-complex attribute based on given parameters.
-func SimpleCoreAttribute(params SimpleParams) CoreAttribute {
-	checkAttributeName(params.name)
+func init() {
+	attributeNameRegex = regexp.MustCompile(attributeNameRegexString)
+	validStringRegex = regexp.MustCompile(validStringRegexString)
+}
 
-	return CoreAttribute{
-		CanonicalValues: params.canonicalValues,
-		CaseExact:       params.caseExact,
-		Description:     params.Description,
-		MultiValued:     params.multiValued,
-		Mutability:      params.mutability,
-		Name:            params.name,
-		ReferenceTypes:  params.referenceTypes,
-		Required:        params.required,
-		Returned:        params.returned,
-		Typ:             params.typ,
-		Uniqueness:      params.uniqueness,
-	}
+// CoreAttribute represents those attributes that sit at the top level of the JSON object together with the common
+// attributes (such as the resource "id").
+type CoreAttribute struct {
+	Name            string                   `json:"name"`
+	Type            DataType                 `json:"type"`
+	Description     string                   `json:"description,omitempty"`
+	MultiValued     bool                     `json:"multiValued"`
+	Required        bool                     `json:"required"`
+	CaseExact       bool                     `json:"caseExact"`
+	CanonicalValues []string                 `json:"canonicalValues,omitempty"`
+	Mutability      AttributeMutability      `json:"mutability"`
+	Returned        AttributeReturned        `json:"returned"`
+	Uniqueness      AttributeUniqueness      `json:"uniqueness"`
+	ReferenceTypes  []AttributeReferenceType `json:"referenceTypes,omitempty"`
+	SubAttributes   []CoreAttribute          `json:"subAttributes,omitempty"`
+}
+
+// SimpleCoreAttribute creates a non-complex attribute based on given parameters.
+func SimpleCoreAttribute(params CoreAttribute) CoreAttribute {
+	checkAttributeName(params.Name)
+
+	// return CoreAttribute{
+	// 	CanonicalValues: params.CanonicalValues,
+	// 	CaseExact:       params.CaseExact,
+	// 	Description:     params.Description,
+	// 	MultiValued:     params.MultiValued,
+	// 	Mutability:      params.Mutability,
+	// 	Name:            params.Name,
+	// 	ReferenceTypes:  params.ReferenceTypes,
+	// 	Required:        params.Required,
+	// 	Returned:        params.Returned,
+	// 	Type:            params.Type,
+	// 	Uniqueness:      params.Uniqueness,
+	// }
+	return CoreAttribute(params)
 }
 
 // ComplexCoreAttribute creates a complex attribute based on given parameters.
-func ComplexCoreAttribute(params ComplexParams) CoreAttribute {
+func ComplexCoreAttribute(params CoreAttribute) CoreAttribute {
 	checkAttributeName(params.Name)
 
 	names := map[string]int{}
 	var sa []CoreAttribute
 	for i, a := range params.SubAttributes {
-		name := strings.ToLower(a.name)
+		name := strings.ToLower(a.Name)
 		if j, ok := names[name]; ok {
 			panic(fmt.Errorf("duplicate name %q for sub-attributes %d and %d", name, i, j))
 		}
 		names[name] = i
 
-		sa = append(sa, CoreAttribute{
-			CanonicalValues: a.canonicalValues,
-			CaseExact:       a.caseExact,
-			Description:     a.Description,
-			MultiValued:     a.multiValued,
-			Mutability:      a.mutability,
-			Name:            a.name,
-			ReferenceTypes:  a.referenceTypes,
-			Required:        a.required,
-			Returned:        a.returned,
-			Typ:             a.typ,
-			Uniqueness:      a.uniqueness,
-		})
+		sa = append(sa, CoreAttribute(a))
 	}
 
 	return CoreAttribute{
@@ -64,28 +75,13 @@ func ComplexCoreAttribute(params ComplexParams) CoreAttribute {
 		Mutability:    params.Mutability,
 		Required:      params.Required,
 		Returned:      params.Returned,
-		subAttributes: sa,
-		Typ:           AttributeDataTypeComplex,
+		SubAttributes: sa,
+		Type:          DataTypeComplex,
 		Uniqueness:    params.Uniqueness,
 	}
 }
 
-// CoreAttribute represents those attributes that sit at the top level of the JSON object together with the common
-// attributes (such as the resource "id").
-type CoreAttribute struct {
-	Name            string
-	Typ             AttributeDataType `json:"type"`
-	MultiValued     bool
-	Description     string `json:",omitempty"`
-	Required        bool
-	CaseExact       bool
-	CanonicalValues []string
-	Mutability      AttributeMutability
-	Returned        AttributeReturned
-	Uniqueness      AttributeUniqueness
-	ReferenceTypes  []AttributeReferenceType
-	subAttributes   []CoreAttribute
-}
+// type ComplexParams CoreAttribute
 
 func (a CoreAttribute) validate(attribute interface{}) (interface{}, errors.ValidationError) {
 	// return false if the attribute is not present but required.
@@ -122,38 +118,38 @@ func (a CoreAttribute) validate(attribute interface{}) (interface{}, errors.Vali
 	return a.validateSingular(attribute)
 }
 
+// compiled in init at the top of the file
+var validStringRegexString = `^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$`
+var validStringRegex *regexp.Regexp
+
 func (a CoreAttribute) validateSingular(attribute interface{}) (interface{}, errors.ValidationError) {
-	switch a.Typ {
-	case AttributeDataTypeBinary:
+	switch a.Type {
+	case DataTypeBinary:
 		bin, ok := attribute.(string)
 		if !ok {
 			return nil, errors.ValidationErrorInvalidValue
 		}
 
-		match, err := regexp.MatchString(`^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$`, bin)
-		if err != nil {
-			panic(err)
-		}
-
+		match := validStringRegex.MatchString(bin)
 		if !match {
 			return nil, errors.ValidationErrorInvalidValue
 		}
 
 		return bin, errors.ValidationErrorNil
-	case AttributeDataTypeBoolean:
+	case DataTypeBoolean:
 		b, ok := attribute.(bool)
 		if !ok {
 			return nil, errors.ValidationErrorInvalidValue
 		}
 		return b, errors.ValidationErrorNil
-	case AttributeDataTypeComplex:
+	case DataTypeComplex:
 		complex, ok := attribute.(map[string]interface{})
 		if !ok {
 			return nil, errors.ValidationErrorInvalidValue
 		}
 
 		attributes := make(map[string]interface{})
-		for _, sub := range a.subAttributes {
+		for _, sub := range a.SubAttributes {
 			var hit interface{}
 			var found bool
 			for k, v := range complex {
@@ -173,7 +169,7 @@ func (a CoreAttribute) validateSingular(attribute interface{}) (interface{}, err
 			attributes[sub.Name] = attr
 		}
 		return attributes, errors.ValidationErrorNil
-	case AttributeDataTypeDateTime:
+	case DataTypeDateTime:
 		date, ok := attribute.(string)
 		if !ok {
 			return nil, errors.ValidationErrorInvalidValue
@@ -183,17 +179,17 @@ func (a CoreAttribute) validateSingular(attribute interface{}) (interface{}, err
 			return nil, errors.ValidationErrorInvalidValue
 		}
 		return date, errors.ValidationErrorNil
-	case AttributeDataTypeDecimal:
+	case DataTypeDecimal:
 		if reflect.TypeOf(attribute).Kind() != reflect.Float64 {
 			return nil, errors.ValidationErrorInvalidValue
 		}
 		return attribute.(float64), errors.ValidationErrorNil
-	case AttributeDataTypeInteger:
+	case DataTypeInteger:
 		if reflect.TypeOf(attribute).Kind() != reflect.Int {
 			return nil, errors.ValidationErrorInvalidValue
 		}
 		return attribute.(int), errors.ValidationErrorNil
-	case AttributeDataTypeString, AttributeDataTypeReference:
+	case DataTypeString, DataTypeReference:
 		s, ok := attribute.(string)
 		if !ok {
 			return nil, errors.ValidationErrorInvalidValue
@@ -201,28 +197,5 @@ func (a CoreAttribute) validateSingular(attribute interface{}) (interface{}, err
 		return s, errors.ValidationErrorNil
 	default:
 		return nil, errors.ValidationErrorInvalidSyntax
-	}
-}
-
-func (a *CoreAttribute) getRawAttributes() map[string]interface{} {
-	rawSubAttributes := make([]map[string]interface{}, len(a.subAttributes))
-
-	for i, subAttr := range a.subAttributes {
-		rawSubAttributes[i] = subAttr.getRawAttributes()
-	}
-
-	return map[string]interface{}{
-		"canonicalValues": a.CanonicalValues,
-		"caseExact":       a.CaseExact,
-		"description":     a.Description,
-		"multiValued":     a.MultiValued,
-		"mutability":      a.Mutability,
-		"name":            a.Name,
-		"referenceTypes":  a.ReferenceTypes,
-		"required":        a.Required,
-		"returned":        a.Returned,
-		"subAttributes":   rawSubAttributes,
-		"type":            a.Typ,
-		"uniqueness":      a.Uniqueness,
 	}
 }

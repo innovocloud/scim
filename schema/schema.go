@@ -8,10 +8,10 @@ import (
 
 // Schema is a collection of attribute definitions that describe the contents of an entire or partial resource.
 type Schema struct {
-	Attributes  []CoreAttribute
-	Description string `json:",omitempty"`
-	ID          string
-	Name        string `json:",omitempty"`
+	Attributes  []CoreAttribute `json:"attributes"`
+	Description string          `json:"description,omitempty"`
+	ID          string          `json:"id"`
+	Name        string          `json:"name,omitempty"`
 }
 
 // Validate validates given resource based on the schema.
@@ -98,12 +98,12 @@ func isReadOnly(attr CoreAttribute) bool {
 // 	})
 // }
 
-func (s Schema) getRawAttributes() []map[string]interface{} {
-	attributes := make([]map[string]interface{}, len(s.Attributes))
+// func (s Schema) getRawAttributes() []map[string]interface{} {
+// 	attributes := make([]map[string]interface{}, len(s.Attributes))
 
-	for i, a := range s.Attributes {
-		attributes[i] = a.getRawAttributes()
-	}
+// 	for i, a := range s.Attributes {
+// 		attributes[i] = a.getRawAttributes()
+// 	}
 
-	return attributes
-}
+// 	return attributes
+// }

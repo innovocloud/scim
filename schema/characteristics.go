@@ -2,20 +2,26 @@ package schema
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 )
 
-func checkAttributeName(name string) {
-	// starts with a A-Za-z followed by a A-Za-z0-9, a dollar sign, a hyphen or an underscore
-	match, err := regexp.MatchString(`^[A-Za-z][\w$-]*$`, name)
-	if err != nil {
-		panic(err) // @TODO libraries should not panic
+// compiled in init in core.go
+var attributeNameRegexString = `^[A-Za-z][\w$-]*$`
+var attributeNameRegex *regexp.Regexp
+
+func checkAttributeName(name string) error {
+	if attributeNameRegex == nil {
+		attributeNameRegex = regexp.MustCompile(attributeNameRegexString)
 	}
+	// starts with a A-Za-z followed by a A-Za-z0-9, a dollar sign, a hyphen or an underscore
+	match := attributeNameRegex.MatchString(name)
 
 	if !match {
-		panic(fmt.Sprintf("invalid attribute name %q", name)) // @TODO libraries should not panic
+		return errors.New(fmt.Sprintf("invalid attribute name %q", name)) // @TODO libraries should not panic
 	}
+	return nil
 }
 
 type AttributeMutability int
@@ -48,7 +54,9 @@ const (
 	// AttributeReferenceTypeExternal indicates that the resource is an external resource.
 	AttributeReferenceTypeExternal AttributeReferenceType = "external"
 	// AttributeReferenceTypeURI indicates that the reference is to a service endpoint or an identifier.
-	AttributeReferenceTypeURI AttributeReferenceType = "uri"
+	AttributeReferenceTypeURI   AttributeReferenceType = "uri"
+	AttributeReferenceTypeUser  AttributeReferenceType = "User"
+	AttributeReferenceTypeGroup AttributeReferenceType = "Group"
 )
 
 // AttributeReturned is a single keyword indicating the circumstances under which an attribute and associated values are
@@ -76,35 +84,34 @@ func (a AttributeReturned) MarshalJSON() ([]byte, error) {
 	}
 }
 
-type AttributeDataType int
+type DataType int
 
 const (
-	AttributeDataTypeDecimal AttributeDataType = iota
-	AttributeDataTypeInteger
-
-	AttributeDataTypeBinary
-	AttributeDataTypeBoolean
-	AttributeDataTypeComplex
-	AttributeDataTypeDateTime
-	AttributeDataTypeReference
-	AttributeDataTypeString
+	DataTypeString DataType = iota
+	DataTypeDecimal
+	DataTypeInteger
+	DataTypeBinary
+	DataTypeBoolean
+	DataTypeComplex
+	DataTypeDateTime
+	DataTypeReference
 )
 
-func (a AttributeDataType) MarshalJSON() ([]byte, error) {
+func (a DataType) MarshalJSON() ([]byte, error) {
 	switch a {
-	case AttributeDataTypeDecimal:
+	case DataTypeDecimal:
 		return json.Marshal("decimal")
-	case AttributeDataTypeInteger:
+	case DataTypeInteger:
 		return json.Marshal("integer")
-	case AttributeDataTypeBinary:
+	case DataTypeBinary:
 		return json.Marshal("binary")
-	case AttributeDataTypeBoolean:
+	case DataTypeBoolean:
 		return json.Marshal("boolean")
-	case AttributeDataTypeComplex:
+	case DataTypeComplex:
 		return json.Marshal("complex")
-	case AttributeDataTypeDateTime:
+	case DataTypeDateTime:
 		return json.Marshal("dateTime")
-	case AttributeDataTypeReference:
+	case DataTypeReference:
 		return json.Marshal("reference")
 	default:
 		return json.Marshal("string")

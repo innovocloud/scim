@@ -15,21 +15,21 @@ import (
 // ResourceType specifies the metadata about a resource type.
 type ResourceType struct {
 	// ID is the resource type's server unique id. This is often the same value as the "name" attribute.
-	ID string `json:",omitempty"`
+	ID string `json:"id,omitempty"`
 	// Name is the resource type name. This name is referenced by the "meta.resourceType" attribute in all resources.
-	Name string
+	Name string `json:"name"`
 	// Description is the resource type's human-readable description.
 	Description string `json:",omitempty"`
 	// Endpoint is the resource type's HTTP-addressable endpoint relative to the Base URL of the service provider,
 	// e.g., "/Users".
-	Endpoint string
+	Endpoint string `json:"endpoint"`
 	// Schema is the resource type's primary/base schema.
-	Schema schema.Schema
+	Schema schema.Schema `json:"schema"`
 	// SchemaExtensions is a list of the resource type's schema extensions.
-	SchemaExtensions []SchemaExtension
+	SchemaExtensions []SchemaExtension `json:"schemaextensions"`
 
 	// Handler is the set of callback method that connect the SCIM server with a provider of the resource type.
-	Handler ResourceHandler
+	Handler ResourceHandler `json:"-"`
 }
 
 // SchemaExtension is one of the resource type's schema extensions.

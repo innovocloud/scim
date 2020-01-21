@@ -3,6 +3,7 @@ package scim
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -17,59 +18,61 @@ func newTestServer() Server {
 		Name:        "User",
 		Description: "User Account",
 		Attributes: []schema.CoreAttribute{
-			schema.SimpleCoreAttribute(schema.SimpleStringParams(schema.StringParams{
+			{
 				Name:       "userName",
 				Required:   true,
 				Uniqueness: schema.AttributeUniquenessServer,
-			})),
-			schema.SimpleCoreAttribute(schema.SimpleBooleanParams(schema.BooleanParams{
+			},
+			{
 				Name:     "active",
 				Required: false,
-			})),
-			schema.SimpleCoreAttribute(schema.SimpleStringParams(schema.StringParams{
+				Type:     schema.DataTypeBoolean,
+			},
+			{
 				Name:       "readonlyThing",
 				Required:   false,
 				Mutability: schema.AttributeMutabilityReadOnly,
-			})),
-			schema.SimpleCoreAttribute(schema.SimpleStringParams(schema.StringParams{
+			},
+			{
 				Name:       "immutableThing",
 				Required:   false,
 				Mutability: schema.AttributeMutabilityImmutable,
-			})),
-			schema.ComplexCoreAttribute(schema.ComplexParams{
+			},
+			schema.ComplexCoreAttribute(schema.CoreAttribute{
 				Name:     "Name",
 				Required: false,
-				SubAttributes: []schema.SimpleParams{
-					schema.SimpleStringParams(schema.StringParams{
+				SubAttributes: []schema.CoreAttribute{
+					{
 						Name: "familyName",
-					}),
-					schema.SimpleStringParams(schema.StringParams{
+					},
+					{
 						Name: "givenName",
-					}),
+					},
 				},
 			}),
-			schema.SimpleCoreAttribute(schema.SimpleStringParams(schema.StringParams{
+			{
 				Name: "displayName",
-			})),
-			schema.ComplexCoreAttribute(schema.ComplexParams{
+			},
+			schema.ComplexCoreAttribute(schema.CoreAttribute{
 				Name:        "emails",
 				MultiValued: true,
-				SubAttributes: []schema.SimpleParams{
-					schema.SimpleStringParams(schema.StringParams{
+				SubAttributes: []schema.CoreAttribute{
+					{
 						Name: "value",
-					}),
-					schema.SimpleStringParams(schema.StringParams{
+					},
+					{
 						Name: "display",
-					}),
-					schema.SimpleStringParams(schema.StringParams{
+					},
+					{
 						Name: "type",
 						CanonicalValues: []string{
 							"work", "home", "other",
 						},
-					}),
-					schema.SimpleBooleanParams(schema.BooleanParams{
+					},
+					{
 						Name: "primary",
-					}),
+						Type: schema.DataTypeBoolean,
+					},
 				},
 			}),
 		},
@@ -80,12 +83,12 @@ func newTestServer() Server {
 		Name:        "EnterpriseUser",
 		Description: "Enterprise User",
 		Attributes: []schema.CoreAttribute{
-			schema.SimpleCoreAttribute(schema.SimpleStringParams(schema.StringParams{
+			{
 				Name: "employeeNumber",
-			})),
-			schema.SimpleCoreAttribute(schema.SimpleStringParams(schema.StringParams{
+			},
+			{
 				Name: "organization",
-			})),
+			},
 		},
 	}
 
@@ -158,18 +161,21 @@ func TestServerSchemasEndpoint(t *testing.T) {
 		t.Errorf("handler returned unexpected body: got %v want 2 total result", rr.Body.String())
 	}
 
-	if len(response.Resources) != 2 {
+	if len(response.Resources.([]interface{})) != 2 {
 		t.Fatal("resources contains more than one schema")
 	}
 
-	s, ok := response.Resources[0].(map[string]interface{})
+	s, ok := response.Resources.([]interface{})[0].(map[string]interface{})
 	if !ok {
 		t.Fatal("schema is not an object")
 	}
 
-	if s["id"].(string) != "urn:ietf:params:scim:schemas:core:2.0:User" &&
-		s["id"].(string) != "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User" {
-		t.Errorf("schema does not contain the correct id: %v", s["id"])
+	id, ok := s["id"].(string)
+
+	if !ok && id != "urn:ietf:params:scim:schemas:core:2.0:User" &&
+		id != "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User" {
+		t.Errorf("schema does not contain the correct id: %v", id)
+		log.Printf("%#v\n", response.Resources.([]interface{})[0])
 	}
 }
 
@@ -198,8 +204,9 @@ func TestServerSchemaEndpointValid(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if s["id"].(string) != "urn:ietf:params:scim:schemas:core:2.0:User" {
-		t.Errorf("schema does not contain the correct id: %s", s["id"])
+	id, ok := s["id"].(string)
+	if !ok && id != "urn:ietf:params:scim:schemas:core:2.0:User" {
+		t.Errorf("schema does not contain the correct id: %s", id)
 	}
 }
 
@@ -221,17 +228,18 @@ func TestServerResourceTypesHandler(t *testing.T) {
 		t.Errorf("handler returned unexpected body: got %v want 1 total result", rr.Body.String())
 	}
 
-	if len(response.Resources) != 2 {
+	if len(response.Resources.([]interface{})) != 2 {
 		t.Fatal("resources contains more than one schema")
 	}
 
-	resourceType, ok := response.Resources[0].(map[string]interface{})
+	resourceType, ok := response.Resources.([]interface{})[0].(map[string]interface{})
 	if !ok {
 		t.Errorf("resource type is not an object")
 	}
 
-	if resourceType["name"].(string) != "User" &&
-		resourceType["name"].(string) != "EnterpriseUser" {
+	name, ok := resourceType["name"].(string)
+	if !ok && name != "User" &&
+		name != "EnterpriseUser" {
 		t.Errorf("schema does not contain the correct id: %v", resourceType["name"])
 	}
 }
